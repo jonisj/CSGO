@@ -3,24 +3,21 @@
 ###########################################################
 FROM cm2network/steamcmd:root
 
-LABEL maintainer="walentinlamonos@gmail.com"
-
 ENV STEAMAPPID 740
 ENV STEAMAPP csgo
 ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
-ENV DLURL https://raw.githubusercontent.com/CM2Walki/CSGO
+
+COPY "etc/entry.sh" "${HOMEDIR}/entry.sh"
 
 # Create autoupdate config
-# Add entry script & ESL config
+# Add entry script & config
 # Remove packages and tidy up
 RUN set -x \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends --no-install-suggests \
 		wget=1.20.1-1.1 \
-		ca-certificates=20190110 \
 		lib32z1=1:1.2.11.dfsg-1 \
 	&& mkdir -p "${STEAMAPPDIR}" \
-	&& wget --max-redirect=30 "${DLURL}/master/etc/entry.sh" -O "${HOMEDIR}/entry.sh" \
 	&& { \
 		echo '@ShutdownOnFailedCommand 1'; \
 		echo '@NoPromptForPassword 1'; \
@@ -55,6 +52,10 @@ ENV SRCDS_FPSMAX=300 \
 	SRCDS_WORKSHOP_AUTHKEY="" \
 	ADDITIONAL_ARGS=""
 
+ENV METAMOD_VERSION 1.11 \
+    SOURCEMOD_VERSION 1.11 \
+    SV_DONWLOADURL=""
+
 USER ${USER}
 
 VOLUME ${STEAMAPPDIR}
@@ -67,3 +68,6 @@ CMD ["bash", "entry.sh"]
 EXPOSE 27015/tcp \
 	27015/udp \
 	27020/udp
+
+
+
