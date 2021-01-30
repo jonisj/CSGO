@@ -100,5 +100,5 @@ bash "${STEAMAPPDIR}/srcds_run" -game "${STEAMAPP}" -console -autoupdate \
 			+host_workshop_collection "${SRCDS_HOST_WORKSHOP_COLLECTION}" \
 			+workshop_start_map "${SRCDS_WORKSHOP_START_MAP}" \
 			-authkey "${SRCDS_WORKSHOP_AUTHKEY}" \
-            +exec "launch.cfg"
+			+exec "launch.cfg"
 			"${ADDITIONAL_ARGS}"
