@@ -6,20 +6,34 @@ bash "${STEAMCMDDIR}/steamcmd.sh" +login anonymous \
 
 # Are we in a metamod container?
 if [ ! -z "$METAMOD_VERSION" ]; then
-	echo "Installing fresh MM" ${SOURCEMOD_VERSION}
 	LATESTMM=$(wget -qO- https://mms.alliedmods.net/mmsdrop/"${METAMOD_VERSION}"/mmsource-latest-linux)
-	wget -qO- https://mms.alliedmods.net/mmsdrop/"${METAMOD_VERSION}"/"${LATESTMM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}"	
-	echo "Done"
+
+	# Check if metamod needs to be updated or installed
+	if [ ! -f "${STEAMAPPDIR}/metamod.version" ] || [ "$LATESTMM" != $(cat "${STEAMAPPDIR}/metamod.version") ]; then
+		# Save current Metamod version
+		echo "$LATESTMM" >> "${STEAMAPPDIR}/metamod.version"
+
+		# Install Metamod
+		echo "Installing MM" ${METAMOD_VERSION}
+		wget -qO- https://mms.alliedmods.net/mmsdrop/"${METAMOD_VERSION}"/"${LATESTMM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}"	
+		echo "Done"
+	fi
+
 
 	if [ ! -z "$SOURCEMOD_VERSION" ]; then
+		LATESTSM=$(wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/sourcemod-latest-linux)
 
-		# We assume that if the config Wis missing, that this is a fresh container
-		if [ ! -f "${STEAMAPPDIR}/${STEAMAPP}/cfg/launch.cfg" ]; then
-			echo "Installing fresh SM" ${SOURCEMOD_VERSION}
-			LATESTSM=$(wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/sourcemod-latest-linux)
+		if [ ! -f "${STEAMAPPDIR}/sourcemod.version" ]; then
+			# Save current Sourcemod version
+			echo "$LATESTSM" >> "${STEAMAPPDIR}/sourcemod.version"
+
+			# Install Sourcemod
+			echo "Installing SM" ${SOURCEMOD_VERSION}
 			wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}"
 			echo "Done"
-		else
+
+		elif [ "$LATESTSM" != $(cat "${STEAMAPPDIR}/sourcemod.version") ]; then
+			# Update
 			echo "Updating SM" ${SOURCEMOD_VERSION}
 			LATESTSM=$(wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/sourcemod-latest-linux)
 			wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}" | tar xzf - "addons/sourcemod/bin" "addons/sourcemod/extensions" \
@@ -29,9 +43,9 @@ if [ ! -z "$METAMOD_VERSION" ]; then
 	fi
 fi
 
+# Create a basic config that is run on server launch
 cat > "${STEAMAPPDIR}/${STEAMAPP}/cfg/launch.cfg" <<EOF
 hostname "${SRCDS_HOSTNAME}"
-
 log off
 sv_log_onefile "0"
 sv_logbans "0"
@@ -58,13 +72,6 @@ sv_downloadurl "${SV_DOWNLOADURL}"
 bot_quota 0
 bot_quota fill
 bot_chatter off
-
-mp_warmup_pausetimer 1
-mp_warmuptime 99999
-mp_do_warmup_period 1
-mp_do_warmup_offine 1
-mp_maxmoney 60000
-mp_startmoney 60000
 EOF
 
 # Believe it or not, if you don't do this srcds_run shits itself
@@ -93,5 +100,5 @@ bash "${STEAMAPPDIR}/srcds_run" -game "${STEAMAPP}" -console -autoupdate \
 			+host_workshop_collection "${SRCDS_HOST_WORKSHOP_COLLECTION}" \
 			+workshop_start_map "${SRCDS_WORKSHOP_START_MAP}" \
 			-authkey "${SRCDS_WORKSHOP_AUTHKEY}" \
-            -exec "launch.cfg"
+            +exec "launch.cfg"
 			"${ADDITIONAL_ARGS}"
