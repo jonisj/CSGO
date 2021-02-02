@@ -7,7 +7,7 @@ ENV STEAMAPPID 740
 ENV STEAMAPP csgo
 ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
 
-COPY "etc/entry.sh" "${HOMEDIR}/entry.sh"
+COPY "etc/" "${HOMEDIR}/"
 
 # Create autoupdate config
 # Add entry script & config

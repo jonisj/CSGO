@@ -36,8 +36,8 @@ if [ ! -z "$METAMOD_VERSION" ]; then
 			# Update
 			echo "Updating SM" ${SOURCEMOD_VERSION}
 			LATESTSM=$(wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/sourcemod-latest-linux)
-			wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}" | tar xzf - "addons/sourcemod/bin" "addons/sourcemod/extensions" \
-						"addons/sourcemod/gamedata" "addons/sourcemod/translations" "addons/sourcemod/plugins" -C "${STEAMAPPDIR}/${STEAMAPP}"
+			wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}" "addons/sourcemod/bin" "addons/sourcemod/extensions" \
+						"addons/sourcemod/gamedata" "addons/sourcemod/translations" "addons/sourcemod/plugins" 
 			echo "Done"
 		fi
 	fi
