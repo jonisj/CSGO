@@ -191,9 +191,11 @@ if [ ! -z "$SV_DOWNLOADURL" ] && [ ! -z "$MAPLIST_URL" ]; then
 			echo $map_name >> "$MAPCYCLE"
 		done < "$MAPLIST"
 
-		echo "Extracting maps.."
-		bunzip2 -q "${MAPS_DIR}/"*".bz2" 2>/dev/null
-		echo "Done"
+		if [ ! -z "$(ls "${MAPS_DIR}" | grep ".bz2")" ]; then
+			echo "Extracting maps.."
+			bunzip2 -q "${MAPS_DIR}/"*".bz2"
+			echo "Done"
+		fi
 
 		# Copy mapcycle & downloaded maps
 		cp "$MAPCYCLE" "${STEAMAPPDIR}/${STEAMAPP}/"
