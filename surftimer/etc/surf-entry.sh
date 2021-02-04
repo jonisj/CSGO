@@ -185,21 +185,21 @@ if [ ! -z "$SV_DOWNLOADURL" ] && [ ! -z "$MAPLIST_URL" ]; then
 				# Download the map
 				echo "Downloading $map"
 				wget -q "$SV_DOWNLOADURL/maps/$map" -P "${MAPS_DIR}"
+
+				if [[ $map == *.bz2 ]]; then
+					echo "Decompressing"
+					bunzip2 -q "${MAPS_DIR}/$map"
+				fi
+
+				mv "${MAPS_DIR}/$map_name.bsp" "${STEAMAPPDIR}/${STEAMAPP}/maps/"
 			fi
 
 			# Add map to the mapcycle
 			echo $map_name >> "$MAPCYCLE"
 		done < "$MAPLIST"
 
-		if [ ! -z "$(ls "${MAPS_DIR}" | grep ".bz2")" ]; then
-			echo "Extracting maps.."
-			bunzip2 -q "${MAPS_DIR}/"*".bz2"
-			echo "Done"
-		fi
-
-		# Copy mapcycle & downloaded maps
+		# Copy mapcycle
 		cp "$MAPCYCLE" "${STEAMAPPDIR}/${STEAMAPP}/"
-		cp -R "${MAPS_DIR}/" "${STEAMAPPDIR}/${STEAMAPP}/"
 	fi
 fi
 
