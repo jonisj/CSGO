@@ -6,6 +6,7 @@ FROM cm2network/steamcmd:root
 ENV STEAMAPPID 740
 ENV STEAMAPP csgo
 ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
+ENV DEPVERSIONDIR "${STEAMAPPDIR}/dependency-versions"
 
 COPY "etc/" "${HOMEDIR}/"
 
@@ -60,7 +61,8 @@ USER ${USER}
 
 WORKDIR ${HOMEDIR}
 
-CMD ["bash", "entry.sh", "start"]
+ENTRYPOINT ["/bin/bash", "entry.sh"]
+CMD ["start.sh"]
 
 # Expose ports
 EXPOSE 27015/tcp \

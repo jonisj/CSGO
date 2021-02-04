@@ -1,47 +1,74 @@
 #!/bin/bash
+set -e
+
 bash "${STEAMCMDDIR}/steamcmd.sh" +login anonymous \
 				+force_install_dir "${STEAMAPPDIR}" \
 				+app_update "${STEAMAPPID}" \
 				+quit
 
-# Are we in a metamod container?
-if [ ! -z "$METAMOD_VERSION" ]; then
-	LATESTMM=$(wget -qO- https://mms.alliedmods.net/mmsdrop/"${METAMOD_VERSION}"/mmsource-latest-linux)
 
-	# Check if metamod needs to be updated or installed
-	if [ ! -f "${STEAMAPPDIR}/metamod.version" ] || [ "$LATESTMM" != $(cat "${STEAMAPPDIR}/metamod.version") ]; then
-		# Save current Metamod version
-		echo "$LATESTMM" >> "${STEAMAPPDIR}/metamod.version"
+mkdir -p "${DEPVERSIONDIR}"
 
+function checkVersion {
+	local -r dependecy="$1"
+	local -r current_ver="$2"
+
+	if [ ! -z "$current_ver" ]; then
+
+		if [ ! -f "${DEPVERSIONDIR}/${dependecy}.version" ]; then
+			echo "install" # Full install
+		elif [ "$current_ver" != $(cat "${DEPVERSIONDIR}/${dependecy}.version") ]; then
+			echo "update" # Update
+		fi
+	fi
+
+	return -1
+}
+
+# Check if Metamod needs an update
+LATESTMM=$(wget -qO- https://mms.alliedmods.net/mmsdrop/"${METAMOD_VERSION}"/mmsource-latest-linux)
+case "$(checkVersion "metamod" "$LATESTMM")" in
+	"install" | "update")
 		# Install Metamod
 		echo "Installing MM" ${METAMOD_VERSION}
 		wget -qO- https://mms.alliedmods.net/mmsdrop/"${METAMOD_VERSION}"/"${LATESTMM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}"	
 		echo "Done"
-	fi
 
+		echo "$LATESTMM" > "${DEPVERSIONDIR}/metamod.version"
+		;;
 
-	if [ ! -z "$SOURCEMOD_VERSION" ]; then
-		LATESTSM=$(wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/sourcemod-latest-linux)
+	*)
+		echo "Metamod is up-to-date"
+		;;
+esac
 
-		if [ ! -f "${STEAMAPPDIR}/sourcemod.version" ]; then
-			# Save current Sourcemod version
-			echo "$LATESTSM" >> "${STEAMAPPDIR}/sourcemod.version"
+# Check if Sourcemod needs an update
+LATESTSM=$(wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/sourcemod-latest-linux)
+case "$(checkVersion "sourcemod" "$LATESTSM")" in
+	"install")
+		# Install Sourcemod
+		echo "Installing SM" ${SOURCEMOD_VERSION}
+		wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}"
+		echo "Done"
 
-			# Install Sourcemod
-			echo "Installing SM" ${SOURCEMOD_VERSION}
-			wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}"
-			echo "Done"
+		echo "$LATESTSM" > "${DEPVERSIONDIR}/sourcemod.version"
+		;;
 
-		elif [ "$LATESTSM" != $(cat "${STEAMAPPDIR}/sourcemod.version") ]; then
-			# Update
-			echo "Updating SM" ${SOURCEMOD_VERSION}
-			LATESTSM=$(wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/sourcemod-latest-linux)
-			wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}" | tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}" "addons/sourcemod/bin" "addons/sourcemod/extensions" \
-						"addons/sourcemod/gamedata" "addons/sourcemod/translations" "addons/sourcemod/plugins" 
-			echo "Done"
-		fi
-	fi
-fi
+	"update")
+		echo "Updating SM" ${SOURCEMOD_VERSION}
+
+		wget -qO- https://sm.alliedmods.net/smdrop/"${SOURCEMOD_VERSION}"/"${LATESTSM}"  \
+			| tar xzf - -C "${STEAMAPPDIR}/${STEAMAPP}"  \
+				"addons/sourcemod/bin" "addons/sourcemod/extensions" "addons/sourcemod/gamedata" \
+				"addons/sourcemod/translations" "addons/sourcemod/plugins"
+
+		echo "Done"
+		echo "$LATESTSM" > "${DEPVERSIONDIR}/sourcemod.version"
+		;;
+	*)
+		echo "Sourcemod is up-to-date"
+		;;
+esac
 
 # Create a basic config that is run on server launch
 cat > "${STEAMAPPDIR}/${STEAMAPP}/cfg/launch.cfg" <<EOF
@@ -74,6 +101,4 @@ bot_quota fill
 bot_chatter off
 EOF
 
-if [ -n "$1" ] && [ $1 = "start" ]; then
-	bash "./start.sh"
-fi
+bash "$1"
