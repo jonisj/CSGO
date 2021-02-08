@@ -21,7 +21,8 @@ ENV DHOOKS_VERSION="2.2.0-detours16" \
 	DB_DATABASE="" \
 	DB_USER="" \
 	DB_PASS="" \
-	MAPLIST_URL=""
+	MAPLIST_URL="" \
+	ZONED_MAPS_ONLY=""
 
 USER root
 RUN set -x \

@@ -117,6 +117,17 @@ getTarredDependency "$TEMPDIR" "smjansson" "https://github.com/thraaawn/SMJansso
 cp -R "$TEMPDIR/smjansson/SMJansson-master/bin/"*".so" "${STEAMAPPDIR}/${STEAMAPP}/addons/sourcemod/extensions/"
 
 
+# Setup config for mysql client
+MYSQL_CONFIG="$TEMPDIR/mysql.conf"
+cat > "$MYSQL_CONFIG" <<EOF
+[client]
+host="${DB_HOST}"
+database="${DB_DATABASE}"
+user="${DB_USER}"
+password="${DB_PASS}"
+port="${DB_PORT}"
+EOF
+
 ## Install SurfTimer
 case "$(checkVersion "surftimer" "${SURFTIMER_VERSION}")" in
 	"install" | "update")
@@ -141,16 +152,11 @@ case "$(checkVersion "surftimer" "${SURFTIMER_VERSION}")" in
 
 	"install")
 		##  Run MySQL scripts on first install
-		cat > "$TEMPDIR/mysql.conf" <<EOF
-[client]
-host="${DB_HOST}"
-database="${DB_DATABASE}"
-user="${DB_USER}"
-password="${DB_PASS}"
-port="${DB_PORT}"
-EOF
-		mysql --defaults-file="$TEMPDIR/mysql.conf" < "$TEMPDIR/surftimer/Surftimer-Official-${SURFTIMER_VERSION}/scripts/mysql-files/ck_maptier.sql"
-		mysql --defaults-file="$TEMPDIR/mysql.conf" < "$TEMPDIR/surftimer/Surftimer-Official-${SURFTIMER_VERSION}/scripts/mysql-files/ck_zones.sql"
+		mysql --defaults-file="$MYSQL_CONFIG" < "$TEMPDIR/surftimer/Surftimer-Official-${SURFTIMER_VERSION}/scripts/mysql-files/ck_maptier.sql"
+		mysql --defaults-file="$MYSQL_CONFIG" < "$TEMPDIR/surftimer/Surftimer-Official-${SURFTIMER_VERSION}/scripts/mysql-files/ck_zones.sql"
+
+		# Overwrite default Stripper: Source global_config.cfg
+		cp "$TEMPDIR/surftimer/Surftimer-Official-${SURFTIMER_VERSION}/addons/stripper/global_filters.cfg" "${STEAMAPPDIR}/${STEAMAPP}/addons/stripper/global_filters.cfg"
 		;;
 	*)
 		echo "SurfTimer is up-to-date"
@@ -171,8 +177,12 @@ if [ ! -z "$SV_DOWNLOADURL" ] && [ ! -z "$MAPLIST_URL" ]; then
 
 	# Download maplist
 	wget -qO- "$MAPLIST_URL" > "$MAPLIST"
-
 	if [ ! -z "$(grep ".bsp" "$MAPLIST")" ]; then
+
+		if [ ! -z "$ZONED_MAPS_ONLY" ]; then
+			# Get all zoned maps from the databse
+			zoned_maps=($(mysql --defaults-file="$MYSQL_CONFIG" -se "SELECT mapname FROM ck_zones GROUP BY mapname ORDER BY mapname ASC;"))
+		fi
 
 		# Loop through the maplist 
 		while IFS="" read -r map || [ -n "$map" ]
@@ -180,8 +190,17 @@ if [ ! -z "$SV_DOWNLOADURL" ] && [ ! -z "$MAPLIST_URL" ]; then
 			# Get map name without extension
 			map_name=$(echo "${map%%.*}")
 
+			if [ ! -z "$ZONED_MAPS_ONLY" ]; then
+				# Check if the map is not found from the list of zoned maps
+				if [[ ! " ${zoned_maps[@]} " =~ " ${map_name} " ]]; then
+					echo "$map_name not zoned. Skipping."
+					continue;
+				fi
+			fi
+
 			# Check if the map is found on the volume
 			if [ ! -f "${STEAMAPPDIR}/${STEAMAPP}/maps/$map_name.bsp" ]; then
+
 				# Download the map
 				echo "Downloading $map"
 				wget -q "$SV_DOWNLOADURL/maps/$map" -P "${MAPS_DIR}"
