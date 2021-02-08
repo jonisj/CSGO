@@ -101,7 +101,7 @@ esac
 # Install Stripper: Source
 case "$(checkVersion "stripper" "${SMLIB_VERSION}")" in
 	"install" | "update")
-		getTarredDependency "$TEMPDIR" "stripper" "http://www.bailopan.net/stripper/files/stripper-${STRIPPER_VERSION}-linux.tar.gz"
+		getTarredDependency "$TEMPDIR" "stripper" "http://www.bailopan.net/stripper/snapshots/1.2/stripper-${STRIPPER_VERSION}-linux.tar.gz"
 		cp -R "$TEMPDIR/stripper/addons/"* "${STEAMAPPDIR}/${STEAMAPP}/addons/"
 
 		echo "${STRIPPER_VERSION}" > "${DEPVERSIONDIR}/stripper.version"
