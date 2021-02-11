@@ -55,24 +55,57 @@ SRCDS_STARTMAP="de_dust2"
 SRCDS_REGION=3
 SRCDS_MAPGROUP="mg_active"
 SRCDS_GAMETYPE=0
-SRCDS_GAMEMODE=1
+SRCDS_GAMEMODE=0
 SRCDS_HOSTNAME="New CSGO Server"
 SRCDS_WORKSHOP_START_MAP=0
 SRCDS_HOST_WORKSHOP_COLLECTION=0
 SRCDS_WORKSHOP_AUTHKEY="" (required to use host_workshop_map)
 ADDITIONAL_ARGS="" (Pass additional arguments to srcds. Make sure to escape correctly!)
 
-SV_DOWNLOADURL="" (Your FastDL URL)
-
 METAMOD_VERSION="1.11"
 SOURCEMOD_VERSION="1.11"
+
+# Required DB variables
+DB_HOST=""
+DB_PORT="3306"
+DB_DATABASE=""
+DB_USER=""
+DB_PASS=""
+
+# Surftimer Versions
+DHOOKS_VERSION="2.2.0-detours16" 
+STEAMWORKS_VERSION="1.2.3c"
+SMLIB_VERSION="0.11"
+STRIPPER_VERSION="1.2.2-git129"
+SMJANSSON_VERSION="e808f0f73a90988b1bbb78289fed27a337b3f073"
+SURFTIMER_VERSION="1.0.2"
+
+# Map syncing variables
+SV_DOWNLOADURL="" (Your FastDL URL)
+MAPLIST_URL=""
+ZONED_MAPS_ONLY=""
+
+# Optional UMC Versions
+UMC_VERSION=""
+GENERATE_UMC_MAPCYCLE=""
 ```
 
 ## Map Synchronization with FastDL
 In order to automatically synchronize maps between your FastDL and the server, you have to specify the following environment variables:
+
 ```dockerfile
 SV_DOWNLOADURL="" (Your FastDL URL)
 MAPLIST_URL="" (URL to a file that contains a list of mapfiles on your FastDL server separated by a line change. Eg. surf_kitsune.bsp.bz2)
 ZONED_MAPS_ONLY="" (If set, only maps that are zoned will be downloaded from the FastDL and used in the mapcycle)
 ```
 
+## UMC 
+If you want to install UMC, you need to define the following variables.
+
+```dockerfile
+UMC_VERSION=""
+GENERATE_UMC_MAPCYCLE=""
+```
+
+UMC_VERSION should be a commit ID or a branch name.
+If GENERATE_UMC_MAPCYCLE is defined, umc_mapcycle.txt will be generated with map stage and tier details.
